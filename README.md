@@ -1,2 +1,2 @@
 # Yacht-Dice
-The Open source
+트위치로 자주 보여서 C언어(파일명만 .cpp)로 만들었습니다. 오픈 소스입니다.
