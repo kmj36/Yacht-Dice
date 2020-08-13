@@ -6,7 +6,7 @@
 #pragma comment(lib,"winmm.lib")
 #pragma warning(disable : 4996)
 // i,j,k ... 등은 다 인덱스 변수임.
-#define BONUS 30 // 보조 합계가 63 이상일 경우 + BONUS
+#define BONUS 40 // 보조 합계가 63 이상일 경우 + BONUS
 
 int compare(const void* a, const void* b) // 비교 오픈 소스 이용함
 {
