@@ -25,15 +25,15 @@ typedef struct low_sections // ÇÏ´Ü Á·º¸
 	char flag[6]; // Á¡¼ö Áßº¹ ¾²±â ¹æÁö
 }low;
 
-int print_mainmenu(void); // ¸ŞÀÎ ¸Ş´º
+int print_mainmenu(FILE *, char *); // ¸ŞÀÎ ¸Ş´º
 int print_turn(void); // °¡À§¹ÙÀ§º¸·Î ÅÏ Á¤ÇÏ±â
-void play(int, high*, low*, high*, low*); // ÇÃ·¹ÀÌ
+void play(int, high*, low*, high*, low*, FILE*); // ÇÃ·¹ÀÌ
 void dice_and_select(int[],int, high*, low*); // ÁÖ»çÀ§ ±¼¸®±â ¹Ø ¼±ÅÃ
 void reset_dice(int []); // ÁÖ»çÀ§ 0À¸·Î ÃÊ±âÈ­
 void print_Dnm_score(int[], int[], high*, low*); // µ¿Àû Á¡¼öÆÇ Ãâ·Â
 void selects(int[],high*, low*); // Á¡¼ö ¼±ÅÃ
 void reset_structer(high*, low*, high*, low*); // ±¸Á¶Ã¼ ¼ıÀÚ 0, ¾ËÆÄºª OÀ¸·Î ÃÊ±âÈ­
-void result(int, int); // ¸¶Áö¸· ºñ±³ ÈÄ °á°ú Ãâ·Â
+void result(int, int, FILE*); // ¸¶Áö¸· ºñ±³ ÈÄ °á°ú Ãâ·Â
 void rule(void); // ±ÔÄ¢ Ãâ·Â
 void using_music(void); // »ç¿ë À½¾Ç Ãâ·Â
 
@@ -43,12 +43,15 @@ int main(void) // main
 	PlaySound(TEXT("bgm.wav"), 0, SND_FILENAME | SND_ASYNC | SND_LOOP); // À½¾Ç Ãâ·Â, ¹«ÇÑ ¹İº¹
 	high *p1_H_s = (high*)malloc(sizeof(high)), *p2_H_s = (high*)malloc(sizeof(high)); // ±¸Á¶Ã¼ Æ÷ÀÎÅÍ µ¿ÀûÇÒ´ç
 	low *p1_L_s = (low*)malloc(sizeof(low)) , *p2_L_s = (low*)malloc(sizeof(low)); // ±¸Á¶Ã¼ µ¿ÀûÇÒ´ç
+	FILE* tfp = (FILE*)malloc(sizeof(FILE));
+	static char* timpe = (char*)malloc(sizeof(char) * 20); // ½Ã°£À» ¹ŞÀ» ¹è¿­ µ¿ÀûÇÒ´ç
+	tfp = fopen("lasttime.txt", "r+");
 	int turn, sel=4; // ÅÏ ¹× ¸ŞÀÎ ¸Ş´º ¼±ÅÃ ÃÊ±âÈ­ 4 = ÇÁ·Î±×·¥ Á¾·á
 
 	reset_structer(p1_H_s, p1_L_s, p2_H_s, p2_L_s);
 	while (sel != 1) // 1ÀÌ¸é °¡À§¹ÙÀ§º¸·Î ÀÌµ¿
 	{
-		sel = print_mainmenu();
+		sel = print_mainmenu(tfp, timpe);
 		if (sel == 2)
 			rule();
 		else if (sel == 3)
@@ -56,8 +59,7 @@ int main(void) // main
 		else if (sel == 4)
 			return 0;
 	}
-	system("cls"); // È­¸é Áö¿ì±â
-
+	free(timpe);
 	turn = print_turn(); // °¡À§¹ÙÀ§º¸ ÈÄ ÅÏ ¹İÈ¯
 	
 	if (turn % 2 == 0) // ÅÏ¿¡ µû¶ó ÇÃ·¹ÀÌ¾î ¼±ÅÃ
@@ -83,7 +85,7 @@ int main(void) // main
 
 	PlaySound(TEXT("bgm2.wav"), 0, SND_FILENAME | SND_ASYNC | SND_LOOP);
 
-	play(turn, p1_H_s, p1_L_s, p2_H_s, p2_L_s); // ÇÃ·¹ÀÌ
+	play(turn, p1_H_s, p1_L_s, p2_H_s, p2_L_s, tfp); // ÇÃ·¹ÀÌ
 
 	PlaySound(NULL, 0, 0);
 	// µ¿ÀûÇÒ´ç ¹İÈ¯
@@ -162,23 +164,18 @@ void rule(void) // ±ÔÄ¢ ¼³¸í Ãâ·Â
 	system("pause");
 }
 
-void result(int p1, int p2)
+void result(int p1, int p2, FILE * fp)
 {
-	FILE* fp = fopen("lasttime.txt", "w"); // ¸¶Áö¸· ÇÃ·¹ÀÌÇÑ ½Ã°£ ÆÄÀÏ ¾²±âÀ» À§ÇØ fp ¿­±â
 	time_t T = time(NULL); // ½Ã°£À» ¹Ş±âÀ§ÇØ time_t ±¸Á¶Ã¼ T ¼±¾ğ
 	struct tm tm = *localtime(&T); // ÇöÀç Áö¿ª ½Ã°£ ¹Ş±â
+	system("cls");
 	if (p1 > p2) // ½ÂÆĞ ¹Ş±â
-	{
-		system("cls");
 		printf("[ÇÃ·¹ÀÌ¾î 1] ½Â¸®!!!");
-	}
 	else
-	{
-		system("cls");
 		printf("[ÇÃ·¹ÀÌ¾î 2] ½Â¸®!!!");
-	}
 	fprintf(fp, "%d-%d-%d %d:%d:%d", tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec); // ÆÄÀÏ ¾²±â
 	fclose(fp); // ÆÄÀÏ ´İ±â
+	free(fp);
 	system("pause");
 }
 
@@ -187,14 +184,8 @@ void reset_structer(high* p1_H_s, low* p1_L_s, high* p2_H_s, low* p2_L_s) // »ó´
 	int i;
 	for (i = 0; i < 6; i++)
 	{
-		p1_H_s->arr[i] = 0;
-		p1_H_s->flag[i] = 'O';
-		p1_L_s->arr[i] = 0;
-		p1_L_s->flag[i] = 'O';
-		p2_H_s->arr[i] = 0;
-		p2_H_s->flag[i] = 'O';
-		p2_L_s->arr[i] = 0;
-		p2_L_s->flag[i] = 'O';
+		p1_H_s->arr[i] = p1_L_s->arr[i] = p2_H_s->arr[i] = p2_L_s->arr[i] = 0;
+		p1_H_s->flag[i] = p1_L_s->flag[i] = p2_H_s->flag[i] = p2_L_s->flag[i] = 'O';
 	}
 }
 
@@ -413,34 +404,9 @@ void dice_and_select(int temp[],int last, high* hi, low* lo) // ÁÖ»çÀ§ ¿Í ¼±ÅÃ(Ç
 
 int print_turn(void) // ÅÏ Á¤ÇÏ´Â º¸Á¶ ·ÎÁ÷
 {
-	int res, i, ans;
-	for (i = 0; i < 36; i++)
-	{
-		if (i == 4)
-		{
-			printf("               [Yacht Dice game]               \n");
-		}
-		else if (i == 6)
-		{
-			printf("                  [¼±ÅÃÇÏ½Ã¿À]                 \n");
-		}
-		else if (i == 8)
-		{
-			printf("                    [1. °¡À§]                  \n");
-		}
-		else if (i == 10)
-		{
-			printf("                    [2. ¹ÙÀ§]                  \n");
-		}
-		else if (i == 12)
-		{
-			printf("                     [3. º¸]                   \n");
-		}
-		else
-		{
-			printf("                                               \n");
-		}
-	}
+	system("cls"); // È­¸é Áö¿ì±â
+	int res, ans;
+	printf("\n\n               [Yacht Dice game]               \n\n\n                  [¼±ÅÃÇÏ½Ã¿À]                 \n\n\n\n\n\n                    [1. °¡À§]                  \n\n\n                    [2. ¹ÙÀ§]                  \n\n\n                     [3. º¸]                  \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 	while (1)
 	{
 		srand((unsigned int)time(NULL)); // ½Ã°£¿¡ µû¶ó randÀÇ °ª º¯°æ
@@ -512,52 +478,18 @@ int print_turn(void) // ÅÏ Á¤ÇÏ´Â º¸Á¶ ·ÎÁ÷
 	return 0;
 }
 
-int print_mainmenu(void) // ¸ŞÀÎ ¸Ş´º ´ã´ç
+int print_mainmenu(FILE * fp, char * timpe) // ¸ŞÀÎ ¸Ş´º ´ã´ç
 {
-	int i, sel;
-	char* timpe = (char*)malloc(sizeof(char) * 50); // ½Ã°£À» ¹ŞÀ» ¹è¿­ µ¿ÀûÇÒ´ç
-	FILE* fp = fopen("lasttime.txt", "r"); // ¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌÇÑ ½Ã°£ °¡Á®¿È
+	int sel;
 	fscanf(fp,"%[^\n]s", timpe); // char * timpe¿¡ ¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌÇÑ ½Ã°£ ³ÖÀ½
-	fclose(fp); // ÆÄÀÏ ´İ±â
 	system("mode con cols=48 lines=36");
-	for (i = 0; i < 36; i++)
-	{
-		if (i == 4)
-		{
-			printf("               [Yacht Dice game]               \n");
-		}
-		else if (i == 6)
-		{
-			printf("[¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌ ÇÑ ½Ã°£: %s]\n", timpe); // ¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌÇÑ ½Ã°£ Ãâ·Â
-			free(timpe); // µ¿ÀûÇÒ´ç ÇØÁ¦
-		}
-		else if (i == 12)
-		{
-			printf("                [1. °ÔÀÓ ½ÃÀÛ]                 \n");
-		}
-		else if (i == 14)
-		{
-			printf("                [2. °ÔÀÓ  ·ê ]                 \n");
-		}
-		else if (i == 16)
-		{
-			printf("                [3. »ç¿ë À½¾Ç]                 \n");
-		}
-		else if (i == 18)
-		{
-			printf("                [4. °ÔÀÓ Á¾·á]                 \n");
-		}
-		else
-		{
-			printf("                                               \n");
-		}
-	}
-	printf("[¼±ÅÃ]: ");
+	printf("\n\n               [Yacht Dice game]               \n\n\n[¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌ ÇÑ ½Ã°£: %s]\n\n\n\n\n\n", timpe); // ¸¶Áö¸·À¸·Î ÇÃ·¹ÀÌÇÑ ½Ã°£ Ãâ·Â
+	printf("\n                [1. °ÔÀÓ ½ÃÀÛ]                 \n\n\n                [2. °ÔÀÓ  ·ê ]                 \n\n\n                [3. »ç¿ë À½¾Ç]                 \n\n\n                [4. °ÔÀÓ Á¾·á]                 \n\n\n\n\n\n\n\n\n\n\n\n\n\n[¼±ÅÃ]: ");
 	scanf("%d", &sel);
 	return sel; // ¸ŞÀÎ¸Ş´º ¼±ÅÃ ¹İÈ¯
 }
 
-void play(int turn, high * p1_H_s, low * p1_L_s, high * p2_H_s, low * p2_L_s) // ÅÏ¿¡ µû¸¥ ½ºÄÚ¾î º¸µå Ãâ·Â
+void play(int turn, high * p1_H_s, low * p1_L_s, high * p2_H_s, low * p2_L_s, FILE * fp) // ÅÏ¿¡ µû¸¥ ½ºÄÚ¾î º¸µå Ãâ·Â
 {
 	system("mode con cols=128 lines=36");
 	/*ÁÖ»çÀ§°¡ dice_and_selects ¸¦ È£ÃâÇÒ ½Ã ¹Ù·Î ÁÖ»çÀ§°¡ ³ª¿À±â ¶§¹®¿¡ last = 2
@@ -816,6 +748,6 @@ void play(int turn, high * p1_H_s, low * p1_L_s, high * p2_H_s, low * p2_L_s) //
 		}
 		turn += 1;
 	}
-	result(p1_total, p2_total);
+	result(p1_total, p2_total, fp);
 	return;
 }
